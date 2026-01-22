@@ -1,60 +1,45 @@
 import express from "express";
 import fetch from "node-fetch";
-import cors from "cors";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:5173" }));
 
 const HUGHESON_BASE = "https://api.hugheson.net/pulse/v1";
 
-// Credentials from environment variables
 const USERNAME = process.env.HUGHESON_USER;
 const PASSWORD = process.env.HUGHESON_PASS;
 
 let cachedToken = null;
+let tokenExpiresAt = 0;
 
-// 🔐 LOGIN
-app.post("/api/login", async (req, res) => {
-  try {
-    console.log("INCOMING: POST /api/login");
+// 🔐 Login helper
+async function login() {
+  const response = await fetch(`${HUGHESON_BASE}/login/authenticate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: USERNAME,
+      password: PASSWORD,
+    }),
+  });
 
-    const response = await fetch(`${HUGHESON_BASE}/login/authenticate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: USERNAME,
-        password: PASSWORD,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.access_token) {
-      console.error("LOGIN FAILED:", data);
-      return res.status(401).json({ error: "Login failed" });
-    }
-
-    cachedToken = data.access_token;
-    console.log("TOKEN SAVED");
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    res.status(500).json({ error: err.message });
+  if (!response.ok) {
+    throw new Error("Login failed");
   }
-});
 
-// 📦 FETCH ASSETS
+  const data = await response.json();
+  cachedToken = data.access_token;
+  tokenExpiresAt = Date.now() + data.expires_in * 1000;
+
+  console.log("Authenticated with HughesOn");
+}
+
+// 🔹 Assets endpoint (auto-login if needed)
 app.get("/api/assets", async (req, res) => {
   try {
-    console.log("INCOMING: GET /api/assets");
-
-    if (!cachedToken) {
-      return res.status(401).json({ error: "Not authenticated" });
+    if (!cachedToken || Date.now() >= tokenExpiresAt) {
+      console.log("No valid token, logging in...");
+      await login();
     }
 
     const response = await fetch(
@@ -66,17 +51,19 @@ app.get("/api/assets", async (req, res) => {
       }
     );
 
+    if (!response.ok) {
+      throw new Error("Asset fetch failed");
+    }
+
     const data = await response.json();
     res.json(data);
   } catch (err) {
-    console.error("ASSET FETCH ERROR:", err);
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 🚀 START SERVER (LOCAL + AZURE)
 const PORT = process.env.PORT || 3001;
-
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);
 });
