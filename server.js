@@ -1,7 +1,21 @@
 import express from "express";
 import fetch from "node-fetch";
+import cors from "cors";
 
 const app = express();
+
+/**
+ * ✅ Allow frontend (local + Azure Static Web App)
+ */
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://brave-cliff-0ab6db10f.2.azurestaticapps.net",
+    ],
+  })
+);
+
 app.use(express.json());
 
 const HUGHESON_BASE = "https://api.hugheson.net/pulse/v1";
