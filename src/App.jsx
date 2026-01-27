@@ -1,7 +1,5 @@
 import { useState } from "react";
 
-const API_BASE = "https://bsconn-api-tr.azurewebsites.net";
-
 function App() {
   const [rawResponse, setRawResponse] = useState(null);
   const [status, setStatus] = useState("Idle");
@@ -13,14 +11,13 @@ function App() {
     setStatus("Fetching assets...");
 
     try {
-      // Single call — backend handles auth + token
-      const assetsRes = await fetch(`${API_BASE}/api/assets`);
+      const res = await fetch("/api/assets");
 
-      if (!assetsRes.ok) {
+      if (!res.ok) {
         throw new Error("Asset fetch failed");
       }
 
-      const json = await assetsRes.json();
+      const json = await res.json();
       setRawResponse(json);
       setStatus("Assets loaded ✅");
     } catch (err) {
@@ -64,26 +61,19 @@ function App() {
       {error && <p style={{ color: "#ff6b6b" }}>{error}</p>}
 
       {rawResponse && (
-        <>
-          <h2>Raw API Response</h2>
-          <pre
-            style={{
-              maxHeight: 500,
-              overflow: "auto",
-              textAlign: "left",
-              border: "1px solid #444",
-              padding: 16,
-              background: "#111",
-              color: "#d4d4d4",
-              fontSize: 13,
-              fontFamily: "Consolas, Monaco, monospace",
-              lineHeight: 1.4,
-              borderRadius: 6,
-            }}
-          >
-            {JSON.stringify(rawResponse, null, 2)}
-          </pre>
-        </>
+        <pre
+          style={{
+            marginTop: 16,
+            maxHeight: 500,
+            overflow: "auto",
+            background: "#111",
+            padding: 16,
+            borderRadius: 6,
+            fontSize: 13,
+          }}
+        >
+          {JSON.stringify(rawResponse, null, 2)}
+        </pre>
       )}
     </div>
   );
