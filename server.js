@@ -1,24 +1,27 @@
 import express from "express";
 import fetch from "node-fetch";
-import cors from "cors";
 
 const app = express();
 
 /**
- * ✅ GLOBAL CORS (allow everything for now)
+ * 🔥 HARD CORS HEADERS (Azure-safe)
  */
-app.use(cors());
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://brave-cliff-0ab6db10f.2.azurestaticapps.net");
+  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
 
-/**
- * ✅ EXPLICITLY HANDLE PREFLIGHT
- * This is the missing piece
- */
-app.options("*", cors());
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
 
 app.use(express.json());
 
 const HUGHESON_BASE = "https://api.hugheson.net/pulse/v1";
-
 const USERNAME = process.env.HUGHESON_USER;
 const PASSWORD = process.env.HUGHESON_PASS;
 
@@ -30,10 +33,7 @@ async function login() {
   const response = await fetch(`${HUGHESON_BASE}/login/authenticate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      username: USERNAME,
-      password: PASSWORD,
-    }),
+    body: JSON.stringify({ username: USERNAME, password: PASSWORD }),
   });
 
   if (!response.ok) {
@@ -43,8 +43,6 @@ async function login() {
   const data = await response.json();
   cachedToken = data.access_token;
   tokenExpiresAt = Date.now() + data.expires_in * 1000;
-
-  console.log("Authenticated with HughesOn");
 }
 
 // 🔹 Assets endpoint
