@@ -1,88 +1,50 @@
 import { useState } from "react";
-
-const API_BASE = "https://bsconn-api-tr.azurewebsites.net";
+import "./App.css";
 
 function App() {
-  const [rawResponse, setRawResponse] = useState(null);
   const [status, setStatus] = useState("Idle");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
+  const [assets, setAssets] = useState([]);
 
   const loadAssets = async () => {
-    setError("");
-    setRawResponse(null);
-    setStatus("Fetching assets...");
+    setStatus("Loading...");
+    setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/assets`);
+      const response = await fetch("/api/assets");
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
 
-      const json = await res.json();
-      setRawResponse(json);
-      setStatus("Assets loaded ✅");
+      const data = await response.json();
+      setAssets(data);
+      setStatus("Success");
     } catch (err) {
       console.error(err);
-      setError("Failed to load assets");
-      setStatus("Error ❌");
+      setStatus("Error");
+      setError(err.message);
     }
   };
 
   return (
-    <div
-      style={{
-        padding: 24,
-        background: "#1e1e1e",
-        minHeight: "100vh",
-        color: "#ffffff",
-        fontFamily: "Segoe UI, Arial, sans-serif",
-      }}
-    >
-      <h1>HughesOn API Test</h1>
+    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+      <h1>Hughes API Test</h1>
 
-      <button
-        onClick={loadAssets}
-        style={{
-          padding: "10px 16px",
-          fontSize: 16,
-          borderRadius: 6,
-          border: "1px solid #888",
-          background: "#2d2d2d",
-          color: "#fff",
-          cursor: "pointer",
-        }}
-      >
-        Load Assets
-      </button>
+      <button onClick={loadAssets}>Load Assets</button>
 
-      <p style={{ marginTop: 12 }}>
-        <strong>Status:</strong> {status}
-      </p>
+      <p>Status: {status}</p>
 
-      {error && <p style={{ color: "#ff6b6b" }}>{error}</p>}
+      {error && (
+        <p style={{ color: "red" }}>
+          Failed to load assets: {error}
+        </p>
+      )}
 
-      {rawResponse && (
-        <>
-          <h2>Raw API Response</h2>
-          <pre
-            style={{
-              maxHeight: 500,
-              overflow: "auto",
-              textAlign: "left",
-              border: "1px solid #444",
-              padding: 16,
-              background: "#111",
-              color: "#d4d4d4",
-              fontSize: 13,
-              fontFamily: "Consolas, Monaco, 'Courier New', monospace",
-              lineHeight: 1.4,
-              borderRadius: 6,
-            }}
-          >
-            {JSON.stringify(rawResponse, null, 2)}
-          </pre>
-        </>
+      {assets.length > 0 && (
+        <pre style={{ marginTop: "1rem", textAlign: "left" }}>
+          {JSON.stringify(assets, null, 2)}
+        </pre>
       )}
     </div>
   );
