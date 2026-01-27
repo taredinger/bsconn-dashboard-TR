@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const API_BASE = "https://bsconn-api-tr.azurewebsites.net";
+
 function App() {
   const [rawResponse, setRawResponse] = useState(null);
   const [status, setStatus] = useState("Idle");
@@ -8,29 +10,17 @@ function App() {
   const loadAssets = async () => {
     setError("");
     setRawResponse(null);
-    setStatus("Authenticating...");
+    setStatus("Fetching assets...");
 
     try {
-      // Step 1: Login (server caches token)
-      const loginRes = await fetch("http://localhost:3001/api/login", {
-        method: "POST",
-      });
-
-      if (!loginRes.ok) {
-        throw new Error("Login failed");
-      }
-
-      setStatus("Fetching assets...");
-
-      // Step 2: Fetch assets
-      const assetsRes = await fetch("http://localhost:3001/api/assets");
+      // Single call — backend handles auth + token
+      const assetsRes = await fetch(`${API_BASE}/api/assets`);
 
       if (!assetsRes.ok) {
         throw new Error("Asset fetch failed");
       }
 
       const json = await assetsRes.json();
-
       setRawResponse(json);
       setStatus("Assets loaded ✅");
     } catch (err) {
@@ -86,7 +76,7 @@ function App() {
               background: "#111",
               color: "#d4d4d4",
               fontSize: 13,
-              fontFamily: "Consolas, Monaco, 'Courier New', monospace",
+              fontFamily: "Consolas, Monaco, monospace",
               lineHeight: 1.4,
               borderRadius: 6,
             }}
