@@ -4,5 +4,8 @@
       "route": "/api/*",
       "rewrite": "https://bsconn-api-tr.azurewebsites.net/api/{*path}"
     }
-  ]
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html"
+  }
 }
