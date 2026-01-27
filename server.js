@@ -1,39 +1,42 @@
 import express from "express";
 import fetch from "node-fetch";
+import cors from "cors";
 
 const app = express();
 
-/**
- * 🔥 HARD CORS HEADERS (Azure-safe)
- */
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://brave-cliff-0ab6db10f.2.azurestaticapps.net");
-  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
+/* ===== CORS (FIXED FOR AZURE) ===== */
+const corsOptions = {
+  origin: [
+    "http://localhost:5173",
+    "https://brave-cliff-0ab6db10f.2.azurestaticapps.net",
+  ],
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // REQUIRED FOR AZURE PREFLIGHT
+/* ================================ */
 
 app.use(express.json());
 
 const HUGHESON_BASE = "https://api.hugheson.net/pulse/v1";
+
 const USERNAME = process.env.HUGHESON_USER;
 const PASSWORD = process.env.HUGHESON_PASS;
 
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
-// 🔐 Login helper
+/* ===== LOGIN ===== */
 async function login() {
   const response = await fetch(`${HUGHESON_BASE}/login/authenticate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: USERNAME, password: PASSWORD }),
+    body: JSON.stringify({
+      username: USERNAME,
+      password: PASSWORD,
+    }),
   });
 
   if (!response.ok) {
@@ -43,9 +46,11 @@ async function login() {
   const data = await response.json();
   cachedToken = data.access_token;
   tokenExpiresAt = Date.now() + data.expires_in * 1000;
+
+  console.log("Authenticated with HughesOn");
 }
 
-// 🔹 Assets endpoint
+/* ===== ASSETS API ===== */
 app.get("/api/assets", async (req, res) => {
   try {
     if (!cachedToken || Date.now() >= tokenExpiresAt) {
@@ -73,6 +78,7 @@ app.get("/api/assets", async (req, res) => {
   }
 });
 
+/* ===== START SERVER ===== */
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`);
