@@ -4,7 +4,7 @@ import "./App.css";
 function App() {
   const [status, setStatus] = useState("Idle");
   const [error, setError] = useState(null);
-  const [assets, setAssets] = useState([]);
+  const [assets, setAssets] = useState(null);
 
   const loadAssets = async () => {
     setStatus("Loading...");
@@ -41,7 +41,7 @@ function App() {
         </p>
       )}
 
-      {assets.length > 0 && (
+      {assets && (
         <pre style={{ marginTop: "1rem", textAlign: "left" }}>
           {JSON.stringify(assets, null, 2)}
         </pre>
