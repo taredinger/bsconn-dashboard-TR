@@ -1,0 +1,8 @@
+{
+  "routes": [
+    {
+      "route": "/api/*",
+      "rewrite": "https://bsconn-api-tr.azurewebsites.net/api/{*path}"
+    }
+  ]
+}
