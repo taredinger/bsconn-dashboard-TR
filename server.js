@@ -5,24 +5,10 @@ import cors from "cors";
 const app = express();
 
 /**
- * ✅ CORS — allow frontend (local + Azure Static Web App)
- * MUST be before routes
+ * ✅ SIMPLE, AZURE-SAFE CORS
+ * (We can tighten this later)
  */
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://brave-cliff-0ab6db10f.2.azurestaticapps.net",
-    ],
-    methods: ["GET", "POST", "OPTIONS"],
-  })
-);
-
-/**
- * ✅ HANDLE PREFLIGHT REQUESTS (THIS WAS THE MISSING PIECE)
- */
-app.options("*", cors());
-
+app.use(cors());
 app.use(express.json());
 
 const HUGHESON_BASE = "https://api.hugheson.net/pulse/v1";
@@ -33,7 +19,7 @@ const PASSWORD = process.env.HUGHESON_PASS;
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
-// 🔐 Login helper (server-side only)
+// 🔐 Login helper
 async function login() {
   const response = await fetch(`${HUGHESON_BASE}/login/authenticate`, {
     method: "POST",
@@ -55,11 +41,10 @@ async function login() {
   console.log("Authenticated with HughesOn");
 }
 
-// 🔹 Assets endpoint (auto-login if needed)
+// 🔹 Assets endpoint
 app.get("/api/assets", async (req, res) => {
   try {
     if (!cachedToken || Date.now() >= tokenExpiresAt) {
-      console.log("No valid token, logging in...");
       await login();
     }
 
