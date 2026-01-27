@@ -5,10 +5,16 @@ import cors from "cors";
 const app = express();
 
 /**
- * ✅ SIMPLE, AZURE-SAFE CORS
- * (We can tighten this later)
+ * ✅ GLOBAL CORS (allow everything for now)
  */
 app.use(cors());
+
+/**
+ * ✅ EXPLICITLY HANDLE PREFLIGHT
+ * This is the missing piece
+ */
+app.options("*", cors());
+
 app.use(express.json());
 
 const HUGHESON_BASE = "https://api.hugheson.net/pulse/v1";
