@@ -1,5 +1,3 @@
-import fetch from "node-fetch";
-
 const HUGHESON_BASE = "https://api.hugheson.net/pulse/v1";
 
 let cachedToken = null;
@@ -24,7 +22,7 @@ async function login() {
   tokenExpiresAt = Date.now() + data.expires_in * 1000;
 }
 
-export default async function (context, req) {
+module.exports = async function (context, req) {
   try {
     if (!cachedToken || Date.now() >= tokenExpiresAt) {
       await login();
@@ -58,4 +56,4 @@ export default async function (context, req) {
       body: { error: err.message },
     };
   }
-}
+};
